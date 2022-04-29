@@ -1,0 +1,3 @@
+displayName = Terrible Fate
+author = absoluteAquarian
+version = 0.1
