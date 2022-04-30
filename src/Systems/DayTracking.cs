@@ -8,7 +8,7 @@ using Terraria.ModLoader.IO;
 
 namespace MajorasTerraria.Systems {
 	internal class DayTracking : ModSystem {
-		public static int currentDay;
+		public static int currentDay = 3;
 
 		public static List<NPCType> masksObtained;
 
