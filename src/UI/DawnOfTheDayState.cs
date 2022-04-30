@@ -250,7 +250,7 @@ namespace MajorasTerraria.UI {
 			float midY = verticalLineHeight / 2f;
 
 			float borderMidY = Math.Max(midY + 2, midY * 1.5f);
-			float borderMidX = borderMidY - midY;
+			float borderMidX = midX + borderMidY - midY;
 
 			PrimitivePacket packet = new(PrimitiveType.TriangleList);
 
