@@ -13,4 +13,9 @@
   <ItemGroup>
     <Folder Include="lib\" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="GraphicsLib">
+      <HintPath>lib\GraphicsLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

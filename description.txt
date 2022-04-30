@@ -1,1 +1,33 @@
-Terrible Fate is a pretty cool mod, it does...this. Modify this file with a description of your mod.
+"You've met with a terrible fate, haven't you?"
+
+This mod is inspired by the [c/dddd00:Terraria x Majora's]
+[c/dddd00:Mask] YouTube series by Wand of Sparking.
+
+=== SUMMARY ===
+Every [c/ff0000:3 days], the world and your inventory will be [c/ff0000:reset], including your Piggy Bank, Safe, Defender's Forge and Void Bag.
+Can you beat the Moon Lord with the limitations imposed by this mod?
+
+=== MECHANICS ===
+Every 3 days, the world will be regenerated as if it were a new world.
+
+You, the player, will be allowed to bring 3 items from your inventory into the newly-generated world from the old world.
+Exceptions to this rule are tools.
+You [c/ff0000:will not] be given a Copper Pickaxe and Copper Axe after a world reset.
+
+Defeating bosses required for progression will grant [c/00ff00:an additional item slot] for transferring items.
+Required bosses include:
+  Skeletron
+  Wall of Flesh
+  the Mechanical bosses
+  Plantera
+  Golem
+(All three Mechanical bosses have to be defeated in order to get the additional item slot.)
+
+Defeating a boss and obtaining its [c/ffff00:Mask drop] will consider that boss to be [c/00ff00:defeated] for the rest of your playthrough.
+
+Money contained in your [c/ffff00:Piggy Bank] is preserved across world resets.  Money contained elsewhere (e.g. your inventory) is [c/ff0000:not] preserved, so be careful!
+
+=== OTHER INFORMATION ===
+Playthroughs must begin with a new player and a new world.
+
+Defeating the [c/ffff00:Moon Lord] will halt the mechanics mentioned earlier.
