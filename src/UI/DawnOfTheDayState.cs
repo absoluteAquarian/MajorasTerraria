@@ -155,7 +155,7 @@ namespace MajorasTerraria.UI {
 					
 					break;
 				case State_GrowHorizontal:
-					if (animationTimer < growHorizontalTime) {
+					if (animationTimer <= growHorizontalTime) {
 						float lerp = GetLerp(animationTimer, 0, growHorizontalTime);
 
 						horizontalLineWidth = (DisplayWidth - 10 - barHeight) * lerp + barHeight;
@@ -249,21 +249,22 @@ namespace MajorasTerraria.UI {
 			float midX = horizontalLineWidth / 2f;
 			float midY = verticalLineHeight / 2f;
 
+			float borderMidX = Math.Max(midX + 2, midX * 1.5f);
 			float borderMidY = Math.Max(midY + 2, midY * 1.5f);
 
 			PrimitivePacket packet = new(PrimitiveType.TriangleList);
 
 			packet.AddDraw(
 				//Border, upper-left triangle
-				new VertexPositionColor((center + new Vector2(-midX, -borderMidY)).ScreenCoord(), Color.Black),  //0
-				new VertexPositionColor((center + new Vector2(midX, -borderMidY)).ScreenCoord(), Color.Black),   //1
-				new VertexPositionColor((center + new Vector2(-midX, borderMidY)).ScreenCoord(), Color.Black)    //2
+				new VertexPositionColor((center + new Vector2(-borderMidX, -borderMidY)).ScreenCoord(), Color.Black),  //0
+				new VertexPositionColor((center + new Vector2(borderMidX, -borderMidY)).ScreenCoord(), Color.Black),   //1
+				new VertexPositionColor((center + new Vector2(-borderMidX, borderMidY)).ScreenCoord(), Color.Black)    //2
 			);
 			packet.AddDraw(
 				//Border, lower-right triangle
-				new VertexPositionColor((center + new Vector2(-midX, borderMidY)).ScreenCoord(), Color.Black),   //2
-				new VertexPositionColor((center + new Vector2(midX, -borderMidY)).ScreenCoord(), Color.Black),   //1
-				new VertexPositionColor((center + new Vector2(midX, borderMidY)).ScreenCoord(), Color.Black)     //3
+				new VertexPositionColor((center + new Vector2(-borderMidX, borderMidY)).ScreenCoord(), Color.Black),   //2
+				new VertexPositionColor((center + new Vector2(borderMidX, -borderMidY)).ScreenCoord(), Color.Black),   //1
+				new VertexPositionColor((center + new Vector2(borderMidX, borderMidY)).ScreenCoord(), Color.Black)     //3
 			);
 
 			PrimitiveDrawing.SubmitPacket(packet);
