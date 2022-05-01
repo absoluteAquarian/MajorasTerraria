@@ -93,6 +93,9 @@ namespace MajorasTerraria.UI {
 			increaseAlpha = true;
 			alphaTimer = AlphaTimerMax;
 
+			topText.Top.Set(10, 1f);
+			bottomText.Top.Set(-LargeUITextSize - 10, 0f);
+
 			string phrase = day switch {
 				1 => "Final",
 				2 => "Second",
