@@ -1,5 +1,7 @@
 ﻿using MajorasTerraria.Systems;
 using Microsoft.Xna.Framework;
+using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace MajorasTerraria.API.Commands {
@@ -13,6 +15,11 @@ namespace MajorasTerraria.API.Commands {
 		public override string Description => "Plays the \"Dawn of the Day\" animation for a given day";
 
 		public override void Action(CommandCaller caller, string input, string[] args) {
+			if (Main.netMode != NetmodeID.SinglePlayer) {
+				caller.Reply("This command can only be used in singleplayer.", Color.Red);
+				return;
+			}
+
 			if (args.Length != 1) {
 				caller.Reply("Expected only one integer argument", Color.Red);
 				return;
@@ -23,7 +30,10 @@ namespace MajorasTerraria.API.Commands {
 				return;
 			}
 
-			InterfaceSystem.dawnDayState.SetDay(day);
+			DayTracking.currentDay = day + 1;
+			DayTracking.displayedDay = false;
+			Main.dayTime = false;
+			Main.SkipToTime(0, true);
 
 			caller.Reply($"Playing animation for day {day}", Color.Green);
 		}

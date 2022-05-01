@@ -1,6 +1,7 @@
 using MajorasTerraria.API;
 using MajorasTerraria.API.Edits;
 using MajorasTerraria.Config;
+using MajorasTerraria.IO;
 using MajorasTerraria.Players;
 using MajorasTerraria.Systems;
 using Microsoft.Xna.Framework;
@@ -44,6 +45,59 @@ namespace MajorasTerraria {
 				On.Terraria.GameContent.UI.Elements.UIWorldListItem.TryMovingToRejectionMenuIfNeeded += Hook_UIWorldListItem_TryMovingToRejectionMenuIfNeeded;
 
 			On.Terraria.GameContent.UI.Elements.UIWorldListItem.ctor += Hook_UIWorldListItem_ctor;
+
+			On.Terraria.Main.UpdateTime_StartDay += Hook_Main_UpdateTime_StartDay;
+
+			On.Terraria.IO.WorldFile.ResetTempsToDayTime += Hook_WorldFile_ResetTempsToDayTime;
+
+			IL.Terraria.WorldGen.do_worldGenCallBack += Patch_WorldGen_do_worldGenCallBack;
+		}
+
+		private void Patch_WorldGen_do_worldGenCallBack(ILContext il) {
+			MethodInfo WorldFile_SaveWorld = typeof(WorldFile).GetMethod("SaveWorld", BindingFlags.Static | BindingFlags.Public, new Type[] { typeof(bool), typeof(bool) });
+
+			ILHelper.EnsureAreNotNull((WorldFile_SaveWorld, typeof(WorldFile).FullName + "::SaveWorld(bool, bool)"));
+			
+			ILCursor c = new(il);
+			
+			int patchNum = 1;
+
+			ILHelper.CompleteLog(Instance, c, beforeEdit: true);
+
+			if (!c.TryGotoNext(MoveType.After, i => i.MatchCall(WorldFile_SaveWorld)))
+				goto bad_il;
+
+			patchNum++;
+
+			c.EmitDelegate(() => WorldData.Save(Main.ActiveWorldFileData.Path, Main.ActiveWorldFileData.IsCloudSave));
+			
+			ILHelper.UpdateInstructionOffsets(c);
+
+			ILHelper.CompleteLog(Instance, c, beforeEdit: false);
+
+			return;
+			bad_il:
+			throw new Exception("Unable to fully patch " + il.Method.Name + "()\n" +
+				"Reason: Could not find instruction sequence for patch #" + patchNum);
+		}
+
+		private void Hook_WorldFile_ResetTempsToDayTime(On.Terraria.IO.WorldFile.orig_ResetTempsToDayTime orig) {
+			orig();
+
+			ReflectionHelper<WorldFile>.InvokeSetterStaticFunction("_tempTime", 0d);
+		}
+
+		private void Hook_Main_UpdateTime_StartDay(On.Terraria.Main.orig_UpdateTime_StartDay orig, ref bool stopEvents) {
+			orig(ref stopEvents);
+
+			DayTracking.displayedDay = false;
+			DayTracking.currentDay--;
+
+			if (DayTracking.currentDay < 1) {
+				DayTracking.currentDay = 3;
+
+				// TODO: transition toward UI state for selecting items once the 3 days have run out
+			}
 		}
 
 		public override void PostSetupContent() {

@@ -56,7 +56,7 @@ namespace MajorasTerraria.API {
 		/// <param name="instance">The instance.  If the field is <see langword="static"/>, pass <see langword="null"/> for this parameter.</param>
 		/// <param name="obj">The boxed value to set the field to</param>
 		/// <exception cref="Exception"/>
-		public static void InvokeSetterFunction(string field, T instance, object obj) {
+		public static void InvokeSetterFunction<U>(string field, U instance, object obj) where U : class {
 			string name = "set_" + field;
 
 			Action<object> staticFunc = null;
@@ -70,13 +70,67 @@ namespace MajorasTerraria.API {
 				if (instance is null)
 					throw new Exception("Cannot invoke instance methods from a null value");
 
-				func(instance, obj);
+				if (instance is not T t)
+					throw new ArgumentException("Instance type was not the expected type");
+
+				func(t, obj);
 			} else if (staticFunc is not null) {
 				if (instance is not null)
 					throw new Exception("Cannot invoke static methods from an instance");
 
 				staticFunc(obj);
 			} else
+				throw new Exception("Unable to create setter function");
+		}
+
+		/// <summary>
+		/// Creates the setter delegate for the field, <paramref name="field"/>, in <typeparamref name="T"/> if necessary, then invokes it
+		/// </summary>
+		/// <param name="field">The name of the field</param>
+		/// <param name="instance">The instance.  If the field is <see langword="static"/>, pass <see langword="null"/> for this parameter.</param>
+		/// <param name="obj">The boxed value to set the field to</param>
+		/// <exception cref="Exception"/>
+		public static void InvokeSetterFunction<U>(string field, ref U instance, object obj) where U : struct {
+			string name = "set_" + field;
+
+			Action<object> staticFunc = null;
+			if (!setterFuncs.TryGetValue(name, out Action<T, object> func) && !setterStaticFuncs.TryGetValue(name, out staticFunc)) {
+				CreateSetAccessor(field, out _);
+
+				_ = setterFuncs.TryGetValue(name, out func) || setterStaticFuncs.TryGetValue(name, out staticFunc);
+			}
+
+			if (func is not null) {
+				if (instance is not T t)
+					throw new ArgumentException("Instance type was not the expected type");
+
+				func(t, obj);
+
+				instance = (U)(object)t;
+			} else if (staticFunc is not null)
+				staticFunc(obj);
+			else
+				throw new Exception("Unable to create setter function");
+		}
+
+		/// <summary>
+		/// Creates the static setter delegate for the field, <paramref name="field"/>, in <typeparamref name="T"/> if necessary, then invokes it
+		/// </summary>
+		/// <param name="field">The name of the field</param>
+		/// <param name="obj">The boxed value to set the field to</param>
+		/// <exception cref="Exception"/>
+		public static void InvokeSetterStaticFunction(string field, object obj) {
+			string name = "set_" + field;
+
+			if (!setterStaticFuncs.TryGetValue(name, out Action<object> staticFunc)) {
+				CreateSetAccessor(field, out _);
+
+				_ = setterStaticFuncs.TryGetValue(name, out staticFunc);
+			}
+
+			if (staticFunc is not null)
+				staticFunc(obj);
+			else
 				throw new Exception("Unable to create setter function");
 		}
 
@@ -219,7 +273,7 @@ namespace MajorasTerraria.API {
 			/// </summary>
 			/// <param name="instance">The instance.  If the field is <see langword="static" />, pass <see langword="null" /> for this parameter.</param>
 			/// <param name="value">The value to set the field to</param>
-			public void SetValue(T instance, object value)
+			public void SetValue<U>(U instance, object value) where U : class
 				=> InvokeSetterFunction(field, instance, value);
 		}
 	}

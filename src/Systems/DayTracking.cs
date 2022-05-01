@@ -9,6 +9,7 @@ using Terraria.ModLoader.IO;
 namespace MajorasTerraria.Systems {
 	internal class DayTracking : ModSystem {
 		public static int currentDay = 3;
+		public static bool displayedDay;
 
 		public static List<NPCType> masksObtained;
 
@@ -28,17 +29,27 @@ namespace MajorasTerraria.Systems {
 				masksObtained = list.Select(NPCType.Load).ToList();
 
 			MoonLordDefeated = tag.GetBool("moonlord");
+
+			displayedDay = tag.GetBool("displayed");
 		}
 
 		public override void SaveWorldData(TagCompound tag) {
 			tag["day"] = currentDay;
 			tag["masks"] = masksObtained?.Select(n => n.Save()).ToList();
 			tag["moonlord"] = MoonLordDefeated;
+			tag["displayed"] = displayedDay;
 		}
 
 		public override void PreUpdateEntities() {
 			if (MoonLordDefeated)
 				currentDay = 3;
+		}
+
+		public override void PostUpdateTime() {
+			if (!displayedDay && currentDay > 0) {
+				displayedDay = true;
+				InterfaceSystem.dawnDayState.SetDay(currentDay);
+			}
 		}
 
 		public struct NPCType {
