@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 
 namespace MajorasTerraria.Items {
@@ -31,10 +32,10 @@ namespace MajorasTerraria.Items {
 						DayTracking.masksObtained.Add(new(NPCID.Retinazer));
 
 					if (npc.type == NPCID.Spazmatism || npc.type == NPCID.Retinazer) {
-						Main.NewText(Lang.GetNPCNameValue(NPCID.Spazmatism) + " is now permanently defeated!", Color.Red);
-						Main.NewText(Lang.GetNPCNameValue(NPCID.Retinazer) + " is now permanently defeated!", Color.Red);
+						Main.NewText(Language.GetTextValue("Mods.MajorasTerraria.MaskObtained", Lang.GetNPCNameValue(NPCID.Spazmatism)), Color.Red);
+						Main.NewText(Language.GetTextValue("Mods.MajorasTerraria.MaskObtained", Lang.GetNPCNameValue(NPCID.Retinazer)), Color.Red);
 					} else
-						Main.NewText(Lang.GetNPCNameValue(npcType) + " is now permanently defeated!", Color.Red);
+						Main.NewText(Language.GetTextValue("Mods.MajorasTerraria.MaskObtained", Lang.GetNPCNameValue(npcType)), Color.Red);
 				}
 			}
 		}

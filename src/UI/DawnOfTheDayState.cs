@@ -29,7 +29,7 @@ namespace MajorasTerraria.UI {
 		private int animationTimer, alphaTimer;
 		private bool increaseAlpha;
 
-		private const float LargeUITextSize = 32f;
+		public const float LargeUITextSize = 32f;
 
 		public const float DisplayWidth = 1000, DisplayHeight = 400;
 		private const float TopTextScale = 1.8f;

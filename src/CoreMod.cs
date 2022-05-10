@@ -51,7 +51,57 @@ namespace MajorasTerraria {
 			On.Terraria.IO.WorldFile.ResetTempsToDayTime += Hook_WorldFile_ResetTempsToDayTime;
 
 			IL.Terraria.WorldGen.do_worldGenCallBack += Patch_WorldGen_do_worldGenCallBack;
+
+			On.Terraria.Main.CanPauseGame += Hook_Main_CanPauseGame;
+			On.Terraria.Main.ShouldUpdateEntities += Hook_Main_ShouldUpdateEntities;
+			IL.Terraria.Main.DrawInfoAccs += Patch_Main_DrawInfoAccs;
 		}
+
+		private void Patch_Main_DrawInfoAccs(ILContext il) {
+			FieldInfo Main_mouseTextColor = typeof(Main).GetField("mouseTextColor", BindingFlags.Static | BindingFlags.Public);
+
+			ILHelper.EnsureAreNotNull((Main_mouseTextColor, typeof(Main).FullName + "::mouseTextColor"));
+
+			ILCursor c = new(il);
+			
+			int patchNum = 1;
+
+			ILHelper.CompleteLog(Instance, c, beforeEdit: true);
+
+			if (!c.TryGotoNext(MoveType.After, i => i.MatchLdsfld(Main_mouseTextColor),
+				i => i.MatchLdsfld(Main_mouseTextColor),
+				i => i.MatchLdsfld(Main_mouseTextColor),
+				i => i.MatchLdsfld(Main_mouseTextColor)))
+				goto bad_il;
+
+			//Move after the Color.ctor() call
+			c.Index++;
+
+			c.Emit(OpCodes.Ldloc, 11);
+			c.Emit(OpCodes.Ldloc, 64);
+			c.EmitDelegate<Func<InfoDisplay, Color, Color>>((info, black) => {
+				if (info == InfoDisplay.Watches && FinalHoursEffects.watchTextOverrideColor is Color color)
+					return color;
+
+				return black;
+			});
+			c.Emit(OpCodes.Stloc, 64);
+
+			ILHelper.UpdateInstructionOffsets(c);
+
+			ILHelper.CompleteLog(Instance, c, beforeEdit: false);
+
+			return;
+			bad_il:
+			throw new Exception("Unable to fully patch " + il.Method.Name + "()\n" +
+				"Reason: Could not find instruction sequence for patch #" + patchNum);			
+		}
+
+		private bool Hook_Main_ShouldUpdateEntities(On.Terraria.Main.orig_ShouldUpdateEntities orig, Main self)
+			=> !InterfaceSystem.dayTransferUIActive && orig(self);
+
+		private bool Hook_Main_CanPauseGame(On.Terraria.Main.orig_CanPauseGame orig)
+			=> !FinalHoursEffects.moonCrashCutscenePlaying && orig();
 
 		private void Patch_WorldGen_do_worldGenCallBack(ILContext il) {
 			MethodInfo WorldFile_SaveWorld = typeof(WorldFile).GetMethod("SaveWorld", BindingFlags.Static | BindingFlags.Public, new Type[] { typeof(bool), typeof(bool) });

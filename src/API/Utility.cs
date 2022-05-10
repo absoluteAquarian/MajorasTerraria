@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.IO;
+using Terraria;
 using Terraria.ModLoader;
 using Terraria.ModLoader.Exceptions;
 using Terraria.ModLoader.IO;
@@ -115,5 +116,34 @@ namespace MajorasTerraria.API {
 
 			return hsv;
 		}
+
+		public const int _4_30 = 4 * 3600 + 30 * 60;
+		public const int _7_30 = 7 * 3600 + 30 * 60;
+		public const int _12_00 = 12 * 3600;
+		public const int _7_30PM_day = 54000;
+		public const int _4_30AM_night = 32400;
+		public const int _12AM = _4_30AM_night - _4_30;  //16,200
+		public const int _12PM = _7_30PM_day - _7_30;    //27,000
+		public const int FullDay = _4_30AM_night + _7_30PM_day;
+
+		public static double CurrentTotalTime()
+			=> Main.dayTime ? Main.time : Main.time + _7_30PM_day;
+
+		public static void GetCurrentTime(out int hours, out int minutes, out double seconds) {
+			double total = CurrentTotalTime();
+
+			//Move time so that 12 AM is at tick time 0
+			total += _4_30;
+			
+			if (total >= FullDay)
+				total -= FullDay;
+
+			hours = (int)(total / 3600);
+			minutes = (int)(total / 60) % 60;
+			seconds = total % 60;
+		}
+
+		public static int ToTicks(int hours = 0, int minutes = 0, int seconds = 0)
+			=> hours * 3600 + minutes * 60 + seconds;
 	}
 }
