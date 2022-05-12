@@ -12,7 +12,7 @@ namespace MajorasTerraria.API.Commands {
 
 		public override string Command => "showday";
 
-		public override string Description => "Plays the \"Dawn of the Day\" animation for a given day";
+		public override string Description => "Plays the \"Dawn of the Day\" animation for a given day and sets the day to 4:30 AM";
 
 		public override void Action(CommandCaller caller, string input, string[] args) {
 			if (Main.netMode != NetmodeID.SinglePlayer) {

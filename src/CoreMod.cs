@@ -13,6 +13,7 @@ using System.Threading;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.GameContent.UI.Elements;
+using Terraria.GameContent.UI.States;
 using Terraria.ID;
 using Terraria.IO;
 using Terraria.ModLoader;
@@ -46,6 +47,8 @@ namespace MajorasTerraria {
 
 			On.Terraria.GameContent.UI.Elements.UIWorldListItem.ctor += Hook_UIWorldListItem_ctor;
 
+			On.Terraria.GameContent.UI.States.UIWorldSelect.CanWorldBePlayed += Hook_UIWorldSelect_CanWorldBePlayed;
+
 			On.Terraria.Main.UpdateTime_StartDay += Hook_Main_UpdateTime_StartDay;
 
 			On.Terraria.IO.WorldFile.ResetTempsToDayTime += Hook_WorldFile_ResetTempsToDayTime;
@@ -56,6 +59,9 @@ namespace MajorasTerraria {
 			On.Terraria.Main.ShouldUpdateEntities += Hook_Main_ShouldUpdateEntities;
 			IL.Terraria.Main.DrawInfoAccs += Patch_Main_DrawInfoAccs;
 		}
+
+		private bool Hook_UIWorldSelect_CanWorldBePlayed(On.Terraria.GameContent.UI.States.UIWorldSelect.orig_CanWorldBePlayed orig, UIWorldSelect self, WorldFileData file)
+			=> orig(self, file) && CheckPlayerFileData(Main.ActivePlayerFileData) && !CheckWorldFileData(file);
 
 		private void Patch_Main_DrawInfoAccs(ILContext il) {
 			FieldInfo Main_mouseTextColor = typeof(Main).GetField("mouseTextColor", BindingFlags.Static | BindingFlags.Public);
@@ -145,8 +151,9 @@ namespace MajorasTerraria {
 
 			if (DayTracking.currentDay < 1) {
 				DayTracking.currentDay = 3;
+				DayTracking.displayedDay = true;
 
-				// TODO: transition toward UI state for selecting items once the 3 days have run out
+				FinalHoursEffects.RequestFinalCutscene();
 			}
 		}
 
@@ -288,8 +295,11 @@ namespace MajorasTerraria {
 
 			PlayerFileData _data = ReflectionHelper<UICharacterListItem>.InvokeGetterFunction("_data", self) as PlayerFileData;
 
-			return Utility.LoadPlayerData<PlayerSaveTracking>(_data.Path, _data.IsCloudSave) is TagCompound tag && tag.GetBool("terribleFate");
+			return CheckPlayerFileData(_data);
 		}
+
+		private static bool CheckPlayerFileData(PlayerFileData _data)
+			=> Utility.LoadPlayerData<PlayerSaveTracking>(_data.Path, _data.IsCloudSave) is TagCompound tag && tag.GetBool("terribleFate");
 
 		private static bool Hook_UIWorldListItem_TryMovingToRejectionMenuIfNeeded(On.Terraria.GameContent.UI.Elements.UIWorldListItem.orig_TryMovingToRejectionMenuIfNeeded orig, UIWorldListItem self, int worldGameMode) {
 			if (orig(self, worldGameMode)) {
@@ -300,19 +310,26 @@ namespace MajorasTerraria {
 			return CheckWorldData(self);
 		}
 
-		public static bool CheckWorldData(UIWorldListItem self, bool setMenuMode = true) {
+		private static bool CheckWorldData(UIWorldListItem self, bool setMenuMode = true) {
 			if (MajorasTerrariaConfig.Instance.AllowExistingSaves)
 				return false;
 
 			WorldFileData _data = ReflectionHelper<UIWorldListItem>.InvokeGetterFunction("_data", self) as WorldFileData;
 			
-			if (_data.IsValid && Utility.LoadWorldData<WorldSaveTracking>(_data.Path, _data.IsCloudSave) is TagCompound tag && tag.GetBool("terribleFate"))
+			if (!CheckWorldFileData(_data))
 				return false;
 
 			if (setMenuMode) {
 				Main.statusText = "Only worlds created while Terrible Fate was enabled can be used with the mod.";
 				Main.menuMode = MenuID.RejectedWorld;
 			}
+			return true;
+		}
+
+		public static bool CheckWorldFileData(WorldFileData _data) {
+			if (_data.IsValid && Utility.LoadWorldData<WorldSaveTracking>(_data.Path, _data.IsCloudSave) is TagCompound tag && tag.GetBool("terribleFate"))
+				return false;
+
 			return true;
 		}
 

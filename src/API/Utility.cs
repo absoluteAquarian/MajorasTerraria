@@ -120,8 +120,8 @@ namespace MajorasTerraria.API {
 		public const int _4_30 = 4 * 3600 + 30 * 60;
 		public const int _7_30 = 7 * 3600 + 30 * 60;
 		public const int _12_00 = 12 * 3600;
-		public const int _7_30PM_day = 54000;
-		public const int _4_30AM_night = 32400;
+		public const int _7_30PM_day = (int)Main.dayLength;
+		public const int _4_30AM_night = (int)Main.nightLength;
 		public const int _12AM = _4_30AM_night - _4_30;  //16,200
 		public const int _12PM = _7_30PM_day - _7_30;    //27,000
 		public const int FullDay = _4_30AM_night + _7_30PM_day;
@@ -143,7 +143,23 @@ namespace MajorasTerraria.API {
 			seconds = total % 60;
 		}
 
-		public static int ToTicks(int hours = 0, int minutes = 0, int seconds = 0)
+		public static void GetCurrentTerrariaTime(out int hours, out int minutes, out double seconds) {
+			if (Main.dayTime) {
+				hours = 4;
+				minutes = 30;
+			} else {
+				hours = 19;
+				minutes = 30;
+			}
+
+			hours += (int)(Main.time / 3600);
+			hours %= 24;
+			minutes += (int)(Main.time / 60) % 60;
+			minutes %= 60;
+			seconds = Main.time % 60;
+		}
+
+		public static double ToTicks(int hours = 0, int minutes = 0, double seconds = 0)
 			=> hours * 3600 + minutes * 60 + seconds;
 	}
 }
