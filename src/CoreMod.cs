@@ -322,7 +322,7 @@ namespace MajorasTerraria {
 				return true;
 			}
 			
-			return CheckWorldData(self);
+			return !CheckWorldData(self);
 		}
 		#endif
 
