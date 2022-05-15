@@ -24,6 +24,11 @@ namespace MajorasTerraria.API.Commands {
 				caller.Reply("Expected no arguments", Color.Red);
 				return;
 			}
+
+			if (DayTracking.currentDay != 1) {
+				caller.Reply("This command can only be used in the Final Day.", Color.Red);
+				return;
+			}
 			
 			FinalHoursEffects.tremorWait = 0;
 

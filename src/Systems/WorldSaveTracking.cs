@@ -1,4 +1,5 @@
 ﻿using Terraria;
+using Terraria.IO;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 
@@ -13,8 +14,8 @@ namespace MajorasTerraria.Systems {
 		public override void SaveWorldData(TagCompound tag) {
 			tag["terribleFate"] = true;
 			tag["resetPending"] = resetPending;
-			tag["lastKnownTime"] = lastKnownTime;
-			tag["lastKnownDaytime"] = lastKnownDaytime;
+			tag["lastKnownTime"] = Main.time;
+			tag["lastKnownDaytime"] = Main.dayTime;
 		}
 
 		public override void LoadWorldData(TagCompound tag) {
@@ -25,7 +26,7 @@ namespace MajorasTerraria.Systems {
 			lastKnownDaytime = tag.GetBool("lastKnownDaytime");
 
 			//Prevent cheesing by leaving the world before the day ends or unloading mods
-			if (Main.time != lastKnownTime || Main.dayTime != lastKnownDaytime) {
+			if (resetPending || Main.time != lastKnownTime || Main.dayTime != lastKnownDaytime) {
 				Mod.Logger.Warn("Time cheesing detected.  Forcing a world reset.");
 				MostRecentLoadWasValid = false;
 				resetPending = true;
@@ -34,5 +35,18 @@ namespace MajorasTerraria.Systems {
 			Main.time = lastKnownTime;
 			Main.dayTime = lastKnownDaytime;
 		}
+
+#if !TML_2022_04
+		public override bool CanWorldBePlayed(PlayerFileData playerData, WorldFileData worldFileData)
+			=> CoreMod.CheckPlayerFileData(playerData) && CoreMod.CheckWorldFileData(worldFileData);
+
+		public override string WorldCanBePlayedRejectionMessage(PlayerFileData playerData, WorldFileData worldData) {
+			if (!CoreMod.CheckPlayerFileData(playerData))
+				return "Only players created while Terrible Fate was enabled can be used with the mod.";
+			else if (!CoreMod.CheckWorldFileData(worldData))
+				return "Only worlds created while Terrible Fate was enabled can be used with the mod.";
+			return "";
+		}
+#endif
 	}
 }

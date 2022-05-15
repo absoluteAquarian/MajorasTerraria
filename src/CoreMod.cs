@@ -40,15 +40,24 @@ namespace MajorasTerraria {
 
 			//GamerMod is dumb and stupid and completely removes the check for invalid gamemodes
 			if (ModLoader.HasMod("GamerMod")) {
+				#if TML_2022_04
 				Logger.Debug("GamerMod was loaded.  Applying alternative IL edit instead of method detour.");
+				#else
+				Logger.Debug("GamerMod was loaded.  Applying IL edit due to tModLoader hooks being ignored.");
+				#endif
 				IL.Terraria.GameContent.UI.Elements.UIWorldListItem.PlayGame += Patch_UIWorldListItem_PlayGame;
-			} else
+			}
+			#if TML_2022_04
+			else
 				On.Terraria.GameContent.UI.Elements.UIWorldListItem.TryMovingToRejectionMenuIfNeeded += Hook_UIWorldListItem_TryMovingToRejectionMenuIfNeeded;
+			#endif
 
 			On.Terraria.GameContent.UI.Elements.UIWorldListItem.ctor += Hook_UIWorldListItem_ctor;
 
+			#if TML_2022_04
 			On.Terraria.GameContent.UI.States.UIWorldSelect.CanWorldBePlayed += Hook_UIWorldSelect_CanWorldBePlayed;
-
+			#endif
+			
 			On.Terraria.Main.UpdateTime_StartDay += Hook_Main_UpdateTime_StartDay;
 
 			On.Terraria.IO.WorldFile.ResetTempsToDayTime += Hook_WorldFile_ResetTempsToDayTime;
@@ -60,8 +69,10 @@ namespace MajorasTerraria {
 			IL.Terraria.Main.DrawInfoAccs += Patch_Main_DrawInfoAccs;
 		}
 
+		#if TML_2022_04
 		private bool Hook_UIWorldSelect_CanWorldBePlayed(On.Terraria.GameContent.UI.States.UIWorldSelect.orig_CanWorldBePlayed orig, UIWorldSelect self, WorldFileData file)
 			=> orig(self, file) && CheckPlayerFileData(Main.ActivePlayerFileData) && !CheckWorldFileData(file);
+		#endif
 
 		private void Patch_Main_DrawInfoAccs(ILContext il) {
 			FieldInfo Main_mouseTextColor = typeof(Main).GetField("mouseTextColor", BindingFlags.Static | BindingFlags.Public);
@@ -212,7 +223,11 @@ namespace MajorasTerraria {
 		private void Hook_UIWorldListItem_ctor(On.Terraria.GameContent.UI.Elements.UIWorldListItem.orig_ctor orig, UIWorldListItem self, WorldFileData data, int orderInList, bool canBePlayed) {
 			orig(self, data, orderInList, canBePlayed);
 
-			if (CheckWorldData(self, setMenuMode: false)) {
+			if (!CheckWorldData(self
+				#if TML_2022_04
+				, setMenuMode: false
+				#endif
+				)) {
 				ReflectionHelper<UIWorldListItem>.InvokeSetterFunction("_canBePlayed", self, false);
 
 				self.BorderColor = new Color(127, 127, 127) * 0.7f;
@@ -270,9 +285,11 @@ namespace MajorasTerraria {
 			//Insert an additonal check in the first if statement:
 			//  if (listeningElement == evt.Target && _data.IsValid && !TryMovingToRejectionMenuIfNeeded(_data.GameMode)) {
 			c.Emit(OpCodes.Ldarg_0);
+			#if TML_2022_04
 			c.Emit(OpCodes.Ldc_I4_1);
+			#endif
 			c.EmitDelegate(CheckWorldData);
-			c.Emit(OpCodes.Brtrue, branch);
+			c.Emit(OpCodes.Brfalse, branch);
 
 			ILHelper.UpdateInstructionOffsets(c);
 
@@ -290,17 +307,15 @@ namespace MajorasTerraria {
 		}
 
 		private static bool CheckPlayerData(UICharacterListItem self) {
-			if (MajorasTerrariaConfig.Instance.AllowExistingSaves)
-				return true;
-
 			PlayerFileData _data = ReflectionHelper<UICharacterListItem>.InvokeGetterFunction("_data", self) as PlayerFileData;
 
 			return CheckPlayerFileData(_data);
 		}
 
-		private static bool CheckPlayerFileData(PlayerFileData _data)
-			=> Utility.LoadPlayerData<PlayerSaveTracking>(_data.Path, _data.IsCloudSave) is TagCompound tag && tag.GetBool("terribleFate");
+		public static bool CheckPlayerFileData(PlayerFileData _data)
+			=> MajorasTerrariaConfig.Instance.AllowExistingSaves || (Utility.LoadPlayerData<PlayerSaveTracking>(_data.Path, _data.IsCloudSave) is TagCompound tag && tag.GetBool("terribleFate"));
 
+		#if TML_2022_04
 		private static bool Hook_UIWorldListItem_TryMovingToRejectionMenuIfNeeded(On.Terraria.GameContent.UI.Elements.UIWorldListItem.orig_TryMovingToRejectionMenuIfNeeded orig, UIWorldListItem self, int worldGameMode) {
 			if (orig(self, worldGameMode)) {
 				//Existing checks failed.  Don't try to do MajorasTerraria checks since that would be unnecessary
@@ -309,28 +324,32 @@ namespace MajorasTerraria {
 			
 			return CheckWorldData(self);
 		}
+		#endif
 
-		private static bool CheckWorldData(UIWorldListItem self, bool setMenuMode = true) {
-			if (MajorasTerrariaConfig.Instance.AllowExistingSaves)
-				return false;
-
+		private static bool CheckWorldData(UIWorldListItem self
+			#if TML_2022_04
+			, bool setMenuMode = true
+			#endif
+			) {
 			WorldFileData _data = ReflectionHelper<UIWorldListItem>.InvokeGetterFunction("_data", self) as WorldFileData;
 			
 			if (!CheckWorldFileData(_data))
 				return false;
 
+			#if TML_2022_04
 			if (setMenuMode) {
 				Main.statusText = "Only worlds created while Terrible Fate was enabled can be used with the mod.";
 				Main.menuMode = MenuID.RejectedWorld;
 			}
+			#endif
 			return true;
 		}
 
 		public static bool CheckWorldFileData(WorldFileData _data) {
-			if (_data.IsValid && Utility.LoadWorldData<WorldSaveTracking>(_data.Path, _data.IsCloudSave) is TagCompound tag && tag.GetBool("terribleFate"))
-				return false;
+			if (MajorasTerrariaConfig.Instance.AllowExistingSaves)
+				return _data.IsValid;
 
-			return true;
+			return _data.IsValid && Utility.LoadWorldData<WorldSaveTracking>(_data.Path, _data.IsCloudSave) is TagCompound tag && tag.GetBool("terribleFate");
 		}
 
 		public override void Unload() {

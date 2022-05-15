@@ -104,7 +104,7 @@ namespace MajorasTerraria.Systems {
 		public static void RequestFinalCutscene() => requestMoonCrashCutscene = true;
 
 		private void InitializeCutscene() {
-			
+			// TODO: add an IL edit for Main.DrawInterface for drawing the final hours overlays
 		}
 
 		public override void ModifyScreenPosition() {
@@ -173,7 +173,7 @@ namespace MajorasTerraria.Systems {
 				tremorStrength = MathHelper.Lerp(0f, 5f, (float)factor) * Main.rand.NextFloat(0.7f, 1.4f);
 				tremorModification = -0.65f / 60f * Main.rand.NextFloat(0.5f, 1.2f);
 
-				SoundEngine.PlaySound(SoundLoader.GetLegacySoundSlot("Assets/Sounds/Custom/Earthquake").WithVolume(0.95f));
+				SoundEngine.PlaySound(SoundLoader.GetLegacySoundSlot(Mod, "Assets/Sounds/Custom/Earthquake").WithVolume(0.95f));
 
 				tremorWait = time;
 			}
@@ -193,5 +193,18 @@ namespace MajorasTerraria.Systems {
 			
 			return DayTracking.currentDay == 1 && !Main.dayTime && hours >= 0 && hours + minutes / 60f < 4.5f;
 		}
+	}
+
+	public class TerribleFateMusic : ModSceneEffect {
+		//Complete and utter silence
+		public override int Music => MusicLoader.GetMusicSlot(Mod, "Assets/Sounds/Music/TerribleFate");
+
+		public override SceneEffectPriority Priority => SceneEffectPriority.BossHigh;
+
+		public override float GetWeight(Player player)
+			=> 1f;
+
+		public override bool IsSceneEffectActive(Player player)
+			=> InterfaceSystem.dayTransferUIActive;
 	}
 }
