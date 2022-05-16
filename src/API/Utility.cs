@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using Terraria;
+using Terraria.IO;
 using Terraria.ModLoader;
 using Terraria.ModLoader.Exceptions;
 using Terraria.ModLoader.IO;
@@ -16,7 +17,10 @@ namespace MajorasTerraria.API {
 			if (!FileUtilities.Exists(path, isCloudSave))
 				return null;
 
-			byte[] buf = FileUtilities.ReadAllBytes(path, isCloudSave);
+			CoreMod.FileEntry<WorldFileData> entry = new(path, isCloudSave);
+
+			if (!CoreMod.FileEntry<WorldFileData>.cache.TryGetValue(entry, out byte[] buf) || buf is null)
+				CoreMod.FileEntry<WorldFileData>.cache[entry] = buf = FileUtilities.ReadAllBytes(path, isCloudSave);
 
 			if (buf[0] != 0x1F || buf[1] != 0x8B) {
 				//LoadLegacy(buf);
@@ -46,7 +50,10 @@ namespace MajorasTerraria.API {
 			if (!FileUtilities.Exists(path, isCloudSave))
 				return null;
 
-			byte[] buf = FileUtilities.ReadAllBytes(path, isCloudSave);
+			CoreMod.FileEntry<PlayerFileData> entry = new(path, isCloudSave);
+
+			if (!CoreMod.FileEntry<PlayerFileData>.cache.TryGetValue(entry, out byte[] buf) || buf is null)
+				CoreMod.FileEntry<PlayerFileData>.cache[entry] = buf = FileUtilities.ReadAllBytes(path, isCloudSave);
 
 			if (buf[0] != 0x1F || buf[1] != 0x8B) {
 				//LoadLegacy(player, buf);

@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using Terraria;
@@ -29,7 +30,25 @@ namespace MajorasTerraria {
 		public static bool[] MaskNPCs;
 		public static bool[] MaskItems;
 
+		internal struct FileEntry<T> where T : FileData {
+			public static Dictionary<FileEntry<T>, byte[]> cache;
+
+			public readonly string path;
+			public readonly bool cloud;
+
+			public FileEntry(string path, bool cloud) {
+				this.path = path;
+				this.cloud = cloud;
+			}
+
+			public override int GetHashCode()
+				=> HashCode.Combine(path, cloud);
+		}
+
 		public override void Load() {
+			FileEntry<PlayerFileData>.cache = new();
+			FileEntry<WorldFileData>.cache = new();
+
 			ILHelper.LogILEdits = true;
 
 			On.Terraria.GameContent.UI.Elements.UICharacterListItem.ctor += Hook_UICharacterListItem_ctor;
@@ -354,6 +373,9 @@ namespace MajorasTerraria {
 
 		public override void Unload() {
 			Interlocked.Exchange(ref UnloadReflection, null)?.Invoke();
+
+			FileEntry<PlayerFileData>.cache = null;
+			FileEntry<WorldFileData>.cache = null;
 		}
 	}
 }

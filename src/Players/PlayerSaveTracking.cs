@@ -1,4 +1,7 @@
-﻿using Terraria.ModLoader;
+﻿using Terraria;
+using Terraria.ID;
+using Terraria.IO;
+using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 
 namespace MajorasTerraria.Players {
@@ -13,6 +16,18 @@ namespace MajorasTerraria.Players {
 
 		public override void LoadData(TagCompound tag) {
 			needsWorldTransfer = tag.GetBool("needsWorldTransfer");
+		}
+
+		public override void OnEnterWorld(Player player) {
+			var playerData = Main.ActivePlayerFileData;
+
+			CoreMod.FileEntry<PlayerFileData>.cache[new(playerData.Path, playerData.IsCloudSave)] = null;
+			
+			if (Main.netMode == NetmodeID.SinglePlayer) {
+				var worldData = Main.ActiveWorldFileData;
+
+				CoreMod.FileEntry<WorldFileData>.cache[new(worldData.Path, worldData.IsCloudSave)] = null;
+			}
 		}
 	}
 }
